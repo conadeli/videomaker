@@ -262,6 +262,7 @@
             border-width: 3px;
         }
     </style>
+ <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div id="app">
@@ -1125,32 +1126,42 @@
            reader.readAsDataURL(file);
        }
        
-       function function startExport() {
-    if (!state.previewContainer || state.scenes.length === 0) return;
+       function startExport() {
+    const targetElement = document.querySelector(
+        state.videoType === 'shorts' ? '.phone-screen' : '.youtube-screen'
+    );
 
-    const previewElement = state.previewContainer;
+    if (!targetElement) {
+        alert("녹화할 화면을 찾을 수 없습니다.");
+        return;
+    }
 
     state.exportMode = true;
     state.isExporting = true;
     state.exportProgress = 0;
 
-    const totalDuration = calculateTotalDuration(); // 총 시간 (ms)
+    const totalDuration = calculateTotalDuration(); // 총 녹화 시간 (ms)
 
-    html2canvas(previewElement).then(canvas => {
-        const stream = canvas.captureStream(30); // FPS: 30
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+    html2canvas(targetElement).then(canvas => {
+        const stream = canvas.captureStream(30); // 30fps
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
 
         const chunks = [];
-        mediaRecorder.ondataavailable = (e) => {
+
+        recorder.ondataavailable = e => {
             if (e.data.size > 0) chunks.push(e.data);
         };
 
-        mediaRecorder.onstop = () => {
+        recorder.onstop = () => {
             const blob = new Blob(chunks, { type: 'video/webm' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+
             const now = new Date();
-            const fileName = `영상_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}.webm`;
+            const fileName = state.videoType === 'shorts'
+                ? `숏츠영상_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours()}${now.getMinutes()}.webm`
+                : `유튜브영상_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours()}${now.getMinutes()}.webm`;
+
+            const a = document.createElement('a');
             a.href = url;
             a.download = fileName;
             a.click();
@@ -1163,33 +1174,27 @@
             renderApp();
         };
 
-        mediaRecorder.start();
+        recorder.start();
 
-        // 자동 종료
         setTimeout(() => {
-            mediaRecorder.stop();
+            recorder.stop();
         }, totalDuration);
 
-        // 진행률 애니메이션
+        // 진행률 표시
         const updateProgress = () => {
             if (!state.isExporting) return;
+
             const elapsed = performance.now() - state.startTime;
             const progress = Math.min((elapsed / totalDuration) * 100, 100);
             state.exportProgress = progress;
 
             const progressValue = document.querySelector('.progress-value');
-            if (progressValue) {
-                progressValue.style.width = `${progress}%`;
-            }
+            if (progressValue) progressValue.style.width = `${progress}%`;
 
             const progressText = document.querySelector('.text-white:not(button):not(h2)');
-            if (progressText) {
-                progressText.textContent = `내보내는 중... ${Math.round(progress)}%`;
-            }
+            if (progressText) progressText.textContent = `내보내는 중... ${Math.round(progress)}%`;
 
-            if (progress < 100) {
-                requestAnimationFrame(updateProgress);
-            }
+            if (progress < 100) requestAnimationFrame(updateProgress);
         };
 
         state.startTime = performance.now();
