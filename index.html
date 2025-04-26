@@ -1125,115 +1125,78 @@
            reader.readAsDataURL(file);
        }
        
-       function startExport() {
+       function function startExport() {
     if (!state.previewContainer || state.scenes.length === 0) return;
 
-    // 브라우저 호환성 체크 추가
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-        alert('현재 브라우저는 화면 녹화를 지원하지 않습니다.');
-        return;
-    }
+    const previewElement = state.previewContainer;
 
     state.exportMode = true;
     state.isExporting = true;
     state.exportProgress = 0;
-    state.currentFrame = 0;
-    state.isPlaying = true;
 
-    // 화면 캡처 권한 요청
-    navigator.mediaDevices.getDisplayMedia({ 
-        video: true, 
-        audio: true 
-    })
-    .then(stream => {
-        try {
-            // 미디어 스트림 설정
-            const combinedStream = new MediaStream([
-                ...stream.getVideoTracks(),
-                ...(state.audioElement ? state.audioElement.captureStream().getAudioTracks() : [])
-            ]);
+    const totalDuration = calculateTotalDuration(); // 총 시간 (ms)
 
-            let options = { mimeType: 'video/webm' };
-            state.recorder = new MediaRecorder(combinedStream, options);
+    html2canvas(previewElement).then(canvas => {
+        const stream = canvas.captureStream(30); // FPS: 30
+        const mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
-            const chunks = [];
-            state.recorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunks.push(e.data);
-            };
+        const chunks = [];
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunks.push(e.data);
+        };
 
-            state.recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                
-                const now = new Date();
-                const dateTime = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = state.videoType === 'shorts' 
-                    ? `숏츠영상_9x16_${dateTime}.webm` 
-                    : `유튜브영상_16x9_${dateTime}.webm`;
-                a.click();
-                
-                URL.revokeObjectURL(url);
-                
-                alert('영상 내보내기가 완료되었습니다! 다운로드된 WebM 파일을 확인하세요.');
-                
-                state.exportMode = false;
-                state.isExporting = false;
-                renderApp();
-            };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const now = new Date();
+            const fileName = `영상_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}.webm`;
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
 
-            state.recorder.start();
-            
-            // 총 녹화 시간 계산 및 자동 중지 로직
-            const totalDuration = calculateTotalDuration();
-            setTimeout(() => {
-                if (state.recorder) state.recorder.stop();
-            }, totalDuration);
+            alert("영상 내보내기가 완료되었습니다!");
 
-            // 진행 상황 업데이트 함수
-            const updateProgress = () => {
-                if (!state.isExporting) return;
-                
-                const elapsed = performance.now() - state.startTime;
-                const progress = Math.min((elapsed / totalDuration) * 100, 100);
-                state.exportProgress = progress;
-                
-                const progressValue = document.querySelector('.progress-value');
-                if (progressValue) {
-                    progressValue.style.width = `${progress}%`;
-                }
-                
-                const progressText = document.querySelector('.text-white:not(button):not(h2)');
-                if (progressText) {
-                    progressText.textContent = `내보내는 중... ${Math.round(progress)}%`;
-                }
-                
-                if (progress < 100) {
-                    requestAnimationFrame(updateProgress);
-                }
-            };
-            
-            state.startTime = performance.now();
-            animateFrames();
-            updateProgress();
-            
+            state.exportMode = false;
+            state.isExporting = false;
             renderApp();
+        };
 
-        } catch (error) {
-            console.error('녹화 시작 오류:', error);
-            alert('녹화 중 오류가 발생했습니다. 다시 시도해주세요.');
-        }
-    })
-    .catch(error => {
-        console.error('화면 캡처 권한 오류:', error);
-        alert('화면 캡처 권한을 허용해주세요.');
-        state.exportMode = false;
-        state.isExporting = false;
-        renderApp();
+        mediaRecorder.start();
+
+        // 자동 종료
+        setTimeout(() => {
+            mediaRecorder.stop();
+        }, totalDuration);
+
+        // 진행률 애니메이션
+        const updateProgress = () => {
+            if (!state.isExporting) return;
+            const elapsed = performance.now() - state.startTime;
+            const progress = Math.min((elapsed / totalDuration) * 100, 100);
+            state.exportProgress = progress;
+
+            const progressValue = document.querySelector('.progress-value');
+            if (progressValue) {
+                progressValue.style.width = `${progress}%`;
+            }
+
+            const progressText = document.querySelector('.text-white:not(button):not(h2)');
+            if (progressText) {
+                progressText.textContent = `내보내는 중... ${Math.round(progress)}%`;
+            }
+
+            if (progress < 100) {
+                requestAnimationFrame(updateProgress);
+            }
+        };
+
+        state.startTime = performance.now();
+        updateProgress();
     });
 }
+
 
 // 총 녹화 시간 계산 함수
 function calculateTotalDuration() {
