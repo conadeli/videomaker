@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>숏츠 제작기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html, body {
+            height: 100%;
+        }
+       /* 미리보기 화면 높이 제한 - 수정 부분 */
+.preview-container {
+    max-height: calc(100vh - 240px);
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+}
+        
+        #app {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .phone-frame {
+            background-color: #4b5563;
+            border-radius: 1.5rem;
+            padding: 0.75rem;
+            position: relative;
+        }
+        
+        .phone-notch {
+            width: 6rem;
+            height: 1.5rem;
+            background-color: black;
+            border-radius: 0 0 0.75rem 0.75rem;
+            margin: 0 auto 0.25rem;
+        }
+        
+        .phone-screen {
+            aspect-ratio: 9/16;
+            background-color: black;
+            border-radius: 0.75rem;
+            border: 4px solid black;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .phone-button {
+            width: 3rem;
+            height: 0.25rem;
+            background-color: #6b7280;
+            border-radius: 9999px;
+            margin: 0.75rem auto 0;
+        }
+        
+        .youtube-frame {
+            background-color: #4b5563;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        
+        .youtube-screen {
+            aspect-ratio: 16/9;
+            background-color: black;
+            border-radius: 0.25rem;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .youtube-controls {
+            height: 0.5rem;
+            background-color: #4b5563;
+            border-radius: 9999px;
+            margin-top: 0.5rem;
+            position: relative;
+        }
+        
+        .youtube-progress {
+            height: 100%;
+            width: 33%;
+            background-color: #ef4444;
+            border-radius: 9999px;
+            position: absolute;
+            left: 0;
+        }
+        
+        .progress-bar {
+            height: 0.625rem;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        
+        .progress-value {
+            height: 100%;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        
+        .image-preview {
+            height: 4rem;
+            width: 4rem;
+            object-fit: cover;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d5db;
+        }
+        
+        /* 이미지 효과 애니메이션 */
+        @keyframes panX {
+            0% { transform: translateX(-5%); }
+            100% { transform: translateX(5%); }
+        }
+        
+        @keyframes panY {
+            0% { transform: translateY(-5%); }
+            100% { transform: translateY(5%); }
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fade {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            50% { transform: translateX(0); }
+            75% { transform: translateX(2px); }
+        }
+        
+        .effect-zoom {
+            transform: scale(1.1);
+            transition: transform 1s ease-in-out;
+        }
+        
+        .effect-pan-x {
+            animation: panX 3s ease-in-out infinite alternate;
+        }
+        
+        .effect-pan-y {
+            animation: panY 3s ease-in-out infinite alternate;
+        }
+        
+        .effect-rotate {
+            animation: rotate 15s linear infinite;
+        }
+        
+        .effect-fade {
+            animation: fade 2s ease-in-out infinite alternate;
+        }
+        
+        .effect-shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+        
+        /* 효과 강도에 따른 클래스 */
+        .intensity-low .effect-zoom { transform: scale(1.05); }
+        .intensity-medium .effect-zoom { transform: scale(1.1); }
+        .intensity-high .effect-zoom { transform: scale(1.2); }
+        
+        .intensity-low .effect-pan-x { animation-name: panXLow; }
+        .intensity-medium .effect-pan-x { animation-name: panXMedium; }
+        .intensity-high .effect-pan-x { animation-name: panXHigh; }
+        
+        .intensity-low .effect-pan-y { animation-name: panYLow; }
+        .intensity-medium .effect-pan-y { animation-name: panYMedium; }
+        .intensity-high .effect-pan-y { animation-name: panYHigh; }
+        
+        .intensity-low .effect-rotate { animation-duration: 20s; }
+        .intensity-medium .effect-rotate { animation-duration: 15s; }
+        .intensity-high .effect-rotate { animation-duration: 10s; }
+        
+        .intensity-low .effect-shake { animation-duration: 0.7s; }
+        .intensity-medium .effect-shake { animation-duration: 0.5s; }
+        .intensity-high .effect-shake { animation-duration: 0.3s; }
+        
+        @keyframes panXLow {
+            0% { transform: translateX(-2%); }
+            100% { transform: translateX(2%); }
+        }
+        
+        @keyframes panXMedium {
+            0% { transform: translateX(-5%); }
+            100% { transform: translateX(5%); }
+        }
+        
+        @keyframes panXHigh {
+            0% { transform: translateX(-10%); }
+            100% { transform: translateX(10%); }
+        }
+        
+        @keyframes panYLow {
+            0% { transform: translateY(-2%); }
+            100% { transform: translateY(2%); }
+        }
+        
+        @keyframes panYMedium {
+            0% { transform: translateY(-5%); }
+            100% { transform: translateY(5%); }
+        }
+        
+        @keyframes panYHigh {
+            0% { transform: translateY(-10%); }
+            100% { transform: translateY(10%); }
+        }
+        
+        .grid-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            overflow: hidden;
+        }
+        
+        .grid-item {
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .caption-container {
+            position: absolute;
+            bottom: 2rem;
+            left: 0;
+            width: 100%;
+            padding: 0.5rem;
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .caption {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: bold;
+            display: inline-block;
+            margin: 0 auto;
+        }
+        
+        .color-picker button {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 9999px;
+            border: 2px solid #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .color-picker button.active {
+            border-color: #3b82f6;
+            border-width: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 앱 컨텐츠는 JavaScript로 렌더링됩니다 -->
+    </div>
+
+    <script>
+        // 애플리케이션 상태
+        const state = {
+            scenes: [{
+                images: [],
+                caption: '',
+                duration: 3,
+                captionStyle: { color: 'white', fontSize: 'lg', background: 'black' },
+                imageEffects: []
+            }],
+            currentFrame: 0,
+            isPlaying: false,
+            previewMode: false,
+            exportMode: false,
+            audioFile: null,
+            audioName: '',
+            exportProgress: 0,
+            isExporting: false,
+            videoType: 'shorts', // 'shorts' 또는 'youtube'
+            
+            // 참조
+            animationFrame: null,
+            startTime: null,
+            audioElement: null,
+            recorder: null,
+            previewContainer: null,
+            mediaStream: null,
+            
+            // 옵션
+            captionColors: ['white', 'yellow', 'lime', 'cyan', 'pink', 'orange'],
+            captionBackgrounds: ['black', 'gray', 'blue', 'red', 'green', 'transparent'],
+            captionSizes: ['sm', 'base', 'lg', 'xl', '2xl'],
+            availableEffects: [
+                { name: '없음', value: 'none' },
+                { name: '확대', value: 'zoom' },
+                { name: '좌우 이동', value: 'pan-x' },
+                { name: '상하 이동', value: 'pan-y' },
+                { name: '회전', value: 'rotate' },
+                { name: '페이드', value: 'fade' },
+                { name: '흔들림', value: 'shake' }
+            ]
+        };
+
+        // DOM 조작 함수
+        function renderApp() {
+            const appElement = document.getElementById('app');
+            if (!appElement) return;
+            
+            if (state.previewMode || state.exportMode) {
+                renderPreviewMode(appElement);
+            } else {
+                renderEditorMode(appElement);
+            }
+        }
+        
+        // 에디터 모드 렌더링
+        function renderEditorMode(container) {
+            let html = `
+                <div class="flex flex-col h-full">
+                    <!-- 헤더 -->
+                    <div class="flex items-center justify-between p-4 bg-gray-800 text-white">
+                        <h1 class="text-2xl font-bold">영상 제작기</h1>
+                        <div class="flex space-x-2">
+                            <button id="shortsBtn" class="${state.videoType === 'shorts' ? 'bg-red-600' : 'bg-gray-600'} py-2 px-4 rounded text-white">
+                                숏츠용 (9:16)
+                            </button>
+                            <button id="youtubeBtn" class="${state.videoType === 'youtube' ? 'bg-red-600' : 'bg-gray-600'} py-2 px-4 rounded text-white">
+                                유튜브용 (16:9)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 에디터 내용 -->
+                    <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
+                        <!-- 왼쪽 에디터 패널 -->
+                        <div class="w-full md:w-2/3 p-4 bg-gray-100 overflow-auto">
+                            <div id="scenes-container">
+                                ${renderScenes()}
+                            </div>
+                            
+                            <!-- 음악 및 버튼 컨트롤 -->
+                            <div class="flex flex-col space-y-4 mt-4">
+                                <div class="bg-gray-200 p-4 rounded">
+                                    <h3 class="text-lg font-medium mb-2">음악 추가</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="file" id="audioUpload" accept="audio/*" class="hidden">
+                                        <label for="audioUpload" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 cursor-pointer">
+                                            음악 파일 선택
+                                        </label>
+                                        <span class="text-gray-700 text-sm" id="audioFileName">
+                                            ${state.audioName || '선택된 파일 없음'}
+                                        </span>
+                                    </div>
+                                    ${state.audioFile ? `
+                                        <div class="mt-2">
+                                            <audio controls class="w-full">
+                                                <source src="${state.audioFile}">
+                                                브라우저가 오디오 태그를 지원하지 않습니다.
+                                            </audio>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="flex space-x-4">
+                                    <button id="addSceneBtn" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">
+                                        장면 추가
+                                    </button>
+                                    <button id="previewModeBtn" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+                                        프리뷰 모드로
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 오른쪽 미리보기 패널 -->
+<div class="hidden md:block md:w-1/3 bg-black p-4">
+    <h2 class="text-lg font-semibold text-white mb-2">실시간 미리보기</h2>
+    
+    <div class="preview-container">
+        ${state.videoType === 'shorts' 
+            ? renderShortsPreview(state.currentFrame, true) 
+            : renderYoutubePreview(state.currentFrame, true)}
+    </div>
+                            
+                            <div class="mt-4 text-white">
+                                <p class="text-center">장면 ${state.currentFrame + 1} / ${state.scenes.length}</p>
+                                <div class="mt-4 flex justify-between">
+                                    <button id="prevFrameBtn" class="bg-gray-700 text-white py-1 px-3 rounded hover:bg-gray-600">
+                                        이전
+                                    </button>
+                                    <button id="nextFrameBtn" class="bg-gray-700 text-white py-1 px-3 rounded hover:bg-gray-600">
+                                        다음
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            attachEditorEventListeners();
+        }
+        
+        // 프리뷰 모드 렌더링
+        function renderPreviewMode(container) {
+            let html = `
+                <div class="flex flex-col items-center justify-center bg-black w-full h-full p-4">
+                    <!-- 비디오 프리뷰 -->
+                    <div class="preview-container">
+    ${state.videoType === 'shorts' 
+        ? renderShortsPreview(state.currentFrame, false) 
+        : renderYoutubePreview(state.currentFrame, false)}
+</div>
+                    
+                    <!-- 내보내기 진행 상태 -->
+                    ${state.exportMode ? `
+                        <div class="mt-4 w-full max-w-md">
+                            <div class="progress-bar">
+                                <div class="progress-value" style="width: ${state.exportProgress}%;"></div>
+                            </div>
+                            <div class="mt-2 flex justify-between items-center">
+                                <div class="text-white">내보내는 중... ${Math.round(state.exportProgress)}%</div>
+                                <button id="cancelExportBtn" class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600">
+                                    취소
+                                </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="mt-4 flex items-center space-x-4">
+                            <button id="playPauseBtn" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+                                ${state.isPlaying ? '정지' : '재생'}
+                            </button>
+                            <div class="text-white">
+                                ${state.currentFrame + 1} / ${state.scenes.length}
+                            </div>
+                            <button id="editorModeBtn" class="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">
+                                편집 모드로
+                            </button>
+                            <button id="exportBtn" class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 font-bold animate-pulse">
+    영상 내보내기 (WebM)
+                            </button>
+                        </div>
+                    `}
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            attachPreviewEventListeners();
+        }
+        
+        // 숏츠 프리뷰 렌더링 (모바일 형태)
+        function renderShortsPreview(frameIndex, isSidebar) {
+            const scene = state.scenes[frameIndex];
+            if (!scene) return '<div class="text-white">장면이 없습니다</div>';
+            
+            // 사이드바일 경우 크기 조정
+            const sizeClass = isSidebar ? 'max-w-full' : 'max-w-xs';
+            
+            let html = `
+                <div class="relative">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div id="${isSidebar ? 'sidePreview' : 'mainPreview'}" class="phone-screen ${sizeClass}" style="width:100%;">
+                            ${renderSceneContent(scene, frameIndex)}
+                        </div>
+                        <div class="phone-button"></div>
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+        
+        // 유튜브 프리뷰 렌더링 (16:9 형태)
+        function renderYoutubePreview(frameIndex, isSidebar) {
+            const scene = state.scenes[frameIndex];
+            if (!scene) return '<div class="text-white">장면이 없습니다</div>';
+            
+            // 사이드바일 경우 크기 조정
+            const sizeClass = isSidebar ? 'max-w-full' : 'max-w-2xl';
+            
+            let html = `
+                <div class="relative">
+                    <div class="youtube-frame">
+                        <div id="${isSidebar ? 'sidePreview' : 'mainPreview'}" class="youtube-screen ${sizeClass}">
+                            ${renderSceneContent(scene, frameIndex)}
+                        </div>
+                        <div class="youtube-controls">
+                            <div class="youtube-progress"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+        
+        // 장면 내용 렌더링 (이미지와 자막)
+        function renderSceneContent(scene, sceneIndex) {
+            if (!scene) return '';
+            
+            let content = '';
+            
+            // 이미지 그리드 렌더링
+            if (scene.images && scene.images.length > 0) {
+                content += '<div class="grid-container">';
+                
+                scene.images.forEach((image, imgIndex) => {
+                    const gridClass = getGridClass(scene.images.length, imgIndex);
+                    const effect = scene.imageEffects && scene.imageEffects[imgIndex] ? scene.imageEffects[imgIndex].effect : 'none';
+                    const intensity = scene.imageEffects && scene.imageEffects[imgIndex] ? getIntensityClass(scene.imageEffects[imgIndex].intensity) : 'intensity-medium';
+                    
+                    content += `
+                        <div class="grid-item ${gridClass}">
+                            <img src="${image}" alt="Scene Image ${imgIndex + 1}" 
+                                class="w-full h-full object-cover ${effect !== 'none' ? `effect-${effect} ${intensity}` : ''}"
+                                data-effect="${effect}"
+                                data-scene="${sceneIndex}"
+                                data-image="${imgIndex}">
+                        </div>
+                    `;
+                });
+                
+                content += '</div>';
+            } else {
+                content += `
+                    <div class="w-full h-full flex items-center justify-center text-white">
+                        이미지를 추가해주세요
+                    </div>
+                `;
+            }
+            
+            // 자막 렌더링
+            if (scene.caption) {
+                const captionStyle = getCaptionStyleClasses(scene.captionStyle);
+                content += `
+                    <div class="caption-container">
+                        <div class="caption ${captionStyle}">
+                            ${scene.caption}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return content;
+        }
+        
+        // 장면 목록 렌더링
+        function renderScenes() {
+            let html = '';
+            
+            state.scenes.forEach((scene, index) => {
+                html += `
+                    <div class="p-4 bg-white rounded-lg shadow-md mb-4 scene-container" data-index="${index}">
+                        <div class="flex justify-between items-center mb-2">
+                            <h2 class="text-lg font-semibold">장면 ${index + 1}</h2>
+                            <div class="flex items-center space-x-2">
+                                <button class="move-scene-up p-1 rounded ${index === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600'}"
+                                        data-index="${index}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                <button class="move-scene-down p-1 rounded ${index === state.scenes.length - 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600'}"
+                                        data-index="${index}" ${index === state.scenes.length - 1 ? 'disabled' : ''}>↓</button>
+                                <button class="remove-scene p-1 rounded ${state.scenes.length <= 1 ? 'bg-gray-300 cursor-not-allowed' : 'bg-red-500 text-white hover:bg-red-600'}"
+                                        data-index="${index}" ${state.scenes.length <= 1 ? 'disabled' : ''}>삭제</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 이미지 섹션 -->
+                            <div class="flex flex-col">
+                                <div class="mb-2">
+                                    <label class="block text-sm font-medium mb-1">이미지</label>
+                                    <div class="bg-gray-200 p-2 rounded">
+                                        <button class="add-images bg-blue-500 text-white py-2 px-4 w-full rounded hover:bg-blue-600 mb-2"
+                                                data-index="${index}">
+                                            이미지 추가 (여러 개 선택 가능)
+                                        </button>
+                                        
+                                        <!-- 이미지 미리보기 -->
+                                        <div class="flex flex-wrap gap-2 image-container" data-index="${index}">
+                                            ${renderImagePreviews(scene.images, scene.imageEffects, index)}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-2">
+                                    <label class="block text-sm font-medium mb-1">
+                                        이미지 효과 강도 (전체 적용)
+                                    </label>
+                                    <input type="range" class="effect-intensity w-full" min="0" max="100" value="50"
+                                           data-index="${index}">
+                                    <div class="flex justify-between text-xs">
+                                        <span>약하게</span>
+                                        <span>강하게</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 자막 섹션 -->
+                            <div class="flex flex-col">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-1">자막</label>
+                                    <textarea class="caption-input w-full p-2 border rounded resize-none h-20"
+                                              data-index="${index}" placeholder="자막을 입력하세요">${scene.caption || ''}</textarea>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium mb-1">자막 색상</label>
+                                    <div class="flex space-x-2 mb-2 color-picker">
+                                        ${renderColorPicker(state.captionColors, scene.captionStyle?.color || 'white', index)}
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">자막 배경</label>
+                                        <select class="caption-bg w-full p-2 border rounded" data-index="${index}">
+                                            ${renderCaptionBackgrounds(scene.captionStyle?.background || 'black')}
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">자막 크기</label>
+                                        <select class="caption-size w-full p-2 border rounded" data-index="${index}">
+                                            ${renderCaptionSizes(scene.captionStyle?.fontSize || 'lg')}
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium mb-1">지속 시간 (초)</label>
+                                    <input type="number" class="duration-input w-full p-2 border rounded"
+                                           min="1" max="10" value="${scene.duration || 3}" data-index="${index}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            return html;
+        }
+        
+        // 이미지 미리보기 렌더링
+        function renderImagePreviews(images, effects, sceneIndex) {
+            if (!images || images.length === 0) {
+                return '<div class="h-16 w-full flex items-center justify-center text-gray-500">이미지를 추가해주세요</div>';
+            }
+            
+            let html = '';
+            
+            images.forEach((image, imageIndex) => {
+                const effect = effects && effects[imageIndex] ? effects[imageIndex].effect : 'none';
+                
+                html += `
+                    <div class="relative group">
+                        <div class="h-16 w-16 overflow-hidden border border-gray-300 rounded">
+                            <img src="${image}" alt="이미지 ${imageIndex + 1}" class="h-full w-full object-cover">
+                        </div>
+                        <button class="remove-image absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                data-scene="${sceneIndex}" data-image="${imageIndex}">×</button>
+                        <select class="image-effect w-full text-xs p-1 border rounded mt-1"
+                                data-scene="${sceneIndex}" data-image="${imageIndex}">
+                            ${renderEffectOptions(effect)}
+                        </select>
+                    </div>
+                `;
+            });
+            
+            return html;
+        }
+        
+        // 이펙트 옵션 렌더링
+        function renderEffectOptions(selectedEffect) {
+            let options = '';
+            
+            state.availableEffects.forEach(effect => {
+                options += `<option value="${effect.value}" ${selectedEffect === effect.value ? 'selected' : ''}>${effect.name}</option>`;
+            });
+            
+            return options;
+        }
+        
+        // 색상 선택기 렌더링
+        function renderColorPicker(colors, selectedColor, sceneIndex) {
+            let html = '';
+            
+            colors.forEach(color => {
+                const isActive = color === selectedColor;
+                let backgroundColor = '';
+                
+                switch (color) {
+                    case 'white': backgroundColor = 'white'; break;
+                    case 'yellow': backgroundColor = '#fcd34d'; break;
+                    case 'lime': backgroundColor = '#a3e635'; break;
+                    case 'cyan': backgroundColor = '#22d3ee'; break;
+                    case 'pink': backgroundColor = '#f472b6'; break;
+                    case 'orange': backgroundColor = '#fb923c'; break;
+                    default: backgroundColor = 'white';
+                }
+                
+                html += `
+                    <button class="caption-color ${isActive ? 'active' : ''}" 
+                           style="background-color: ${backgroundColor}" 
+                           data-color="${color}" 
+                           data-index="${sceneIndex}"></button>
+               `;
+           });
+           
+           return html;
+       }
+       
+       // 자막 배경 옵션 렌더링
+       function renderCaptionBackgrounds(selectedBg) {
+           let options = '';
+           
+           state.captionBackgrounds.forEach(bg => {
+               let displayName = '';
+               
+               switch (bg) {
+                   case 'black': displayName = '검정'; break;
+                   case 'gray': displayName = '회색'; break;
+                   case 'blue': displayName = '파랑'; break;
+                   case 'red': displayName = '빨강'; break;
+                   case 'green': displayName = '초록'; break;
+                   case 'transparent': displayName = '투명'; break;
+                   default: displayName = bg;
+               }
+               
+               options += `<option value="${bg}" ${selectedBg === bg ? 'selected' : ''}>${displayName}</option>`;
+           });
+           
+           return options;
+       }
+       
+       // 자막 크기 옵션 렌더링
+       function renderCaptionSizes(selectedSize) {
+           let options = '';
+           
+           state.captionSizes.forEach(size => {
+               let displayName = '';
+               
+               switch (size) {
+                   case 'sm': displayName = '작게'; break;
+                   case 'base': displayName = '기본'; break;
+                   case 'lg': displayName = '크게'; break;
+                   case 'xl': displayName = '더 크게'; break;
+                   case '2xl': displayName = '아주 크게'; break;
+                   default: displayName = size;
+               }
+               
+               options += `<option value="${size}" ${selectedSize === size ? 'selected' : ''}>${displayName}</option>`;
+           });
+           
+           return options;
+       }
+       
+       // 그리드 레이아웃 클래스 계산
+       function getGridClass(totalImages, index) {
+           if (state.videoType === 'shorts') {
+               // 세로형 (9:16) 레이아웃
+               if (totalImages === 1) return 'w-full h-full';
+               if (totalImages === 2) return 'w-full h-1/2';
+               if (totalImages === 3) {
+                   if (index === 0) return 'w-full h-1/2';
+                   return 'w-1/2 h-1/2';
+               }
+               if (totalImages === 4) return 'w-1/2 h-1/2';
+               if (totalImages <= 6) {
+                   if (totalImages === 5 && index === 0) return 'w-full h-1/3';
+                   return 'w-1/2 h-1/3';
+               }
+               return 'w-1/3 h-1/3';
+           } else {
+               // 가로형 (16:9) 레이아웃
+               if (totalImages === 1) return 'w-full h-full';
+               if (totalImages === 2) return 'w-1/2 h-full';
+               if (totalImages === 3) {
+                   if (index === 0) return 'w-1/2 h-full';
+                   return 'w-1/2 h-1/2';
+               }
+               if (totalImages === 4) return 'w-1/2 h-1/2';
+               if (totalImages <= 6) {
+                   if (totalImages === 5 && index === 0) return 'w-1/3 h-full';
+                   return 'w-1/3 h-1/2';
+               }
+               return 'w-1/4 h-1/3';
+           }
+       }
+       
+       // 자막 스타일 클래스 계산
+       function getCaptionStyleClasses(style) {
+           if (!style) return 'text-white text-lg bg-black bg-opacity-70';
+           
+           let textColor = 'text-white';
+           let fontSize = 'text-lg';
+           let bgColor = 'bg-black';
+           let bgOpacity = 'bg-opacity-70';
+           
+           // 색상 설정
+           switch (style.color) {
+               case 'yellow': textColor = 'text-yellow-300'; break;
+               case 'lime': textColor = 'text-lime-400'; break;
+               case 'cyan': textColor = 'text-cyan-400'; break;
+               case 'pink': textColor = 'text-pink-400'; break;
+               case 'orange': textColor = 'text-orange-400'; break;
+               default: textColor = 'text-white';
+           }
+           
+           // 폰트 크기 설정
+           switch (style.fontSize) {
+               case 'sm': fontSize = 'text-sm'; break;
+               case 'base': fontSize = 'text-base'; break;
+               case 'lg': fontSize = 'text-lg'; break;
+               case 'xl': fontSize = 'text-xl'; break;
+               case '2xl': fontSize = 'text-2xl'; break;
+               default: fontSize = 'text-lg';
+           }
+           
+           // 배경 설정
+           switch (style.background) {
+               case 'gray': bgColor = 'bg-gray-800'; break;
+               case 'blue': bgColor = 'bg-blue-900'; break;
+               case 'red': bgColor = 'bg-red-900'; break;
+               case 'green': bgColor = 'bg-green-900'; break;
+               case 'transparent': 
+                   bgColor = ''; 
+                   bgOpacity = '';
+                   break;
+               default: bgColor = 'bg-black';
+           }
+           
+           return `${textColor} ${fontSize} ${bgColor} ${bgOpacity}`;
+       }
+       
+       // 효과 강도 클래스 가져오기
+       function getIntensityClass(intensity) {
+           if (!intensity) return 'intensity-medium';
+           
+           if (intensity < 33) return 'intensity-low';
+           if (intensity < 67) return 'intensity-medium';
+           return 'intensity-high';
+       }
+       
+       // 에디터 모드 이벤트 리스너 연결
+       function attachEditorEventListeners() {
+           // 비디오 타입 전환 버튼
+           document.getElementById('shortsBtn').addEventListener('click', () => setVideoType('shorts'));
+           document.getElementById('youtubeBtn').addEventListener('click', () => setVideoType('youtube'));
+           
+           // 프리뷰 모드 전환 버튼
+           document.getElementById('previewModeBtn').addEventListener('click', togglePreviewMode);
+           
+           // 장면 추가 버튼
+           document.getElementById('addSceneBtn').addEventListener('click', addScene);
+           
+           // 오디오 업로드
+           document.getElementById('audioUpload').addEventListener('change', handleAudioUpload);
+           
+           // 미리보기 프레임 이동 버튼
+           if (document.getElementById('prevFrameBtn')) {
+               document.getElementById('prevFrameBtn').addEventListener('click', () => {
+                   state.currentFrame = (state.currentFrame - 1 + state.scenes.length) % state.scenes.length;
+                   updateSidebarPreview();
+               });
+           }
+           
+           if (document.getElementById('nextFrameBtn')) {
+               document.getElementById('nextFrameBtn').addEventListener('click', () => {
+                   state.currentFrame = (state.currentFrame + 1) % state.scenes.length;
+                   updateSidebarPreview();
+               });
+           }
+           
+           // 장면 컨테이너 이벤트 위임
+           const scenesContainer = document.getElementById('scenes-container');
+           if (scenesContainer) {
+               scenesContainer.addEventListener('click', (e) => {
+                   // 장면 순서 이동 - 위로
+                   if (e.target.classList.contains('move-scene-up')) {
+                       const index = parseInt(e.target.dataset.index);
+                       moveScene(index, -1);
+                   }
+                   
+                   // 장면 순서 이동 - 아래로
+                   if (e.target.classList.contains('move-scene-down')) {
+                       const index = parseInt(e.target.dataset.index);
+                       moveScene(index, 1);
+                   }
+                   
+                   // 장면 삭제
+                   if (e.target.classList.contains('remove-scene')) {
+                       const index = parseInt(e.target.dataset.index);
+                       removeScene(index);
+                   }
+                   
+                   // 이미지 추가
+                   if (e.target.classList.contains('add-images')) {
+                       const index = parseInt(e.target.dataset.index);
+                       addImagesToScene(index);
+                   }
+                   
+                   // 이미지 삭제
+                   if (e.target.classList.contains('remove-image')) {
+                       const sceneIndex = parseInt(e.target.dataset.scene);
+                       const imageIndex = parseInt(e.target.dataset.image);
+                       removeImage(sceneIndex, imageIndex);
+                   }
+                   
+                   // 자막 색상 변경
+                   if (e.target.classList.contains('caption-color')) {
+                       const sceneIndex = parseInt(e.target.dataset.index);
+                       const color = e.target.dataset.color;
+                       setCaptionStyleProperty(sceneIndex, 'color', color);
+                   }
+               });
+               
+               // 인풋 이벤트 위임 (change, input)
+               scenesContainer.addEventListener('change', (e) => {
+                   // 이미지 효과 변경
+                   if (e.target.classList.contains('image-effect')) {
+                       const sceneIndex = parseInt(e.target.dataset.scene);
+                       const imageIndex = parseInt(e.target.dataset.image);
+                       const effect = e.target.value;
+                       setImageEffect(sceneIndex, imageIndex, effect);
+                   }
+                   
+                   // 자막 배경 변경
+                   if (e.target.classList.contains('caption-bg')) {
+                       const sceneIndex = parseInt(e.target.dataset.index);
+                       const background = e.target.value;
+                       setCaptionStyleProperty(sceneIndex, 'background', background);
+                   }
+                   
+                   // 자막 크기 변경
+                   if (e.target.classList.contains('caption-size')) {
+                       const sceneIndex = parseInt(e.target.dataset.index);
+                       const fontSize = e.target.value;
+                       setCaptionStyleProperty(sceneIndex, 'fontSize', fontSize);
+                   }
+                   
+                   // 지속 시간 변경
+                   if (e.target.classList.contains('duration-input')) {
+                       const sceneIndex = parseInt(e.target.dataset.index);
+                       const duration = parseInt(e.target.value) || 3;
+                       setSceneDuration(sceneIndex, duration);
+                   }
+               });
+               
+               // 자막 텍스트 입력
+               scenesContainer.addEventListener('input', (e) => {
+                   if (e.target.classList.contains('caption-input')) {
+                       const sceneIndex = parseInt(e.target.dataset.index);
+                       const caption = e.target.value;
+                       setSceneCaption(sceneIndex, caption);
+                   }
+                   
+                   // 효과 강도 변경
+                   if (e.target.classList.contains('effect-intensity')) {
+                       const sceneIndex = parseInt(e.target.dataset.index);
+                       const intensity = parseInt(e.target.value);
+                       setAllEffectsIntensity(sceneIndex, intensity);
+                   }
+               });
+           }
+       }
+       
+       // 프리뷰 모드 이벤트 리스너 연결
+       function attachPreviewEventListeners() {
+           if (state.exportMode) {
+               // 내보내기 취소 버튼
+               document.getElementById('cancelExportBtn').addEventListener('click', cancelExport);
+           } else {
+               // 재생/정지 버튼
+               document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+               
+               // 편집 모드 전환 버튼
+               document.getElementById('editorModeBtn').addEventListener('click', togglePreviewMode);
+               
+               // 내보내기 버튼
+               document.getElementById('exportBtn').addEventListener('click', startExport);
+           }
+           
+           // 프리뷰 컨테이너 참조 저장
+           state.previewContainer = document.getElementById('mainPreview');
+       }
+       
+       // 사이드바 프리뷰 업데이트
+       function updateSidebarPreview() {
+           const sidePreview = document.getElementById('sidePreview');
+           if (!sidePreview) return;
+           
+           if (state.videoType === 'shorts') {
+               sidePreview.innerHTML = renderSceneContent(state.scenes[state.currentFrame], state.currentFrame);
+           } else {
+               sidePreview.innerHTML = renderSceneContent(state.scenes[state.currentFrame], state.currentFrame);
+           }
+           
+           // 프레임 카운터 업데이트
+           const frameCounter = document.querySelector('.md\\:block p.text-center');
+           if (frameCounter) {
+               frameCounter.textContent = `장면 ${state.currentFrame + 1} / ${state.scenes.length}`;
+           }
+       }
+       
+       // 비디오 타입 변경
+       function setVideoType(type) {
+           state.videoType = type;
+           renderApp();
+       }
+       
+       // 프리뷰 모드 전환
+       function togglePreviewMode() {
+           state.previewMode = !state.previewMode;
+           state.currentFrame = 0;
+           state.isPlaying = false;
+           
+           if (state.animationFrame) {
+               cancelAnimationFrame(state.animationFrame);
+               state.animationFrame = null;
+           }
+           
+           renderApp();
+       }
+       
+       // 재생/정지 전환
+       function togglePlayPause() {
+           state.isPlaying = !state.isPlaying;
+           
+           if (state.isPlaying) {
+               state.startTime = null;
+               animateFrames();
+           } else if (state.animationFrame) {
+               cancelAnimationFrame(state.animationFrame);
+               state.animationFrame = null;
+           }
+           
+           // 버튼 텍스트 업데이트
+           const playPauseBtn = document.getElementById('playPauseBtn');
+           if (playPauseBtn) {
+               playPauseBtn.textContent = state.isPlaying ? '정지' : '재생';
+           }
+       }
+       
+       // 프레임 애니메이션
+       function animateFrames() {
+           const now = performance.now();
+           
+           if (!state.startTime) {
+               state.startTime = now;
+           }
+           
+           const elapsed = now - state.startTime;
+           const scene = state.scenes[state.currentFrame];
+           const duration = (scene?.duration || 3) * 1000;
+           
+           if (elapsed >= duration) {
+               state.currentFrame = (state.currentFrame + 1) % state.scenes.length;
+               state.startTime = now;
+               
+               // 프리뷰 업데이트
+               const previewContent = document.getElementById('mainPreview');
+               if (previewContent) {
+                   previewContent.innerHTML = renderSceneContent(state.scenes[state.currentFrame], state.currentFrame);
+               }
+               
+               // 프레임 카운터 업데이트
+               const frameCounter = document.querySelector('.text-white:not(button):not(h2)');
+               if (frameCounter) {
+                   frameCounter.textContent = `${state.currentFrame + 1} / ${state.scenes.length}`;
+               }
+           }
+           
+           state.animationFrame = requestAnimationFrame(animateFrames);
+       }
+       
+       // 오디오 파일 업로드 처리
+       function handleAudioUpload(e) {
+           const file = e.target.files[0];
+           if (!file) return;
+           
+           const reader = new FileReader();
+           reader.onload = (event) => {
+               state.audioFile = event.target.result;
+               state.audioName = file.name;
+               
+               // 오디오 요소 생성
+               state.audioElement = new Audio(state.audioFile);
+               
+               // UI 업데이트
+               document.getElementById('audioFileName').textContent = state.audioName;
+               
+               // 오디오 플레이어 업데이트
+               const audioContainer = document.getElementById('audioUpload').parentNode.parentNode;
+               if (audioContainer) {
+                   const audioPlayerHTML = `
+                       <div class="mt-2">
+                           <audio controls class="w-full">
+                               <source src="${state.audioFile}">
+                               브라우저가 오디오 태그를 지원하지 않습니다.
+                           </audio>
+                       </div>
+                   `;
+                   
+                   // 기존 플레이어 제거
+                   const existingPlayer = audioContainer.querySelector('.mt-2');
+                   if (existingPlayer) {
+                       existingPlayer.remove();
+                   }
+                   
+                   // 새 플레이어 추가
+                   audioContainer.insertAdjacentHTML('beforeend', audioPlayerHTML);
+               }
+           };
+           reader.readAsDataURL(file);
+       }
+       
+       // 내보내기 시작
+       function startExport() {
+           if (!state.previewContainer || state.scenes.length === 0) return;
+           
+           state.exportMode = true;
+           state.isExporting = true;
+           state.exportProgress = 0;
+           state.currentFrame = 0;
+           state.isPlaying = true;
+           
+           try {
+               // 미디어 스트림 설정
+               const stream = state.previewContainer.captureStream(30);
+               
+               // 오디오 추가
+               if (state.audioElement && state.audioFile) {
+                   state.audioElement.currentTime = 0;
+                   state.audioElement.play();
+                   const audioStream = state.audioElement.captureStream();
+                   const audioTrack = audioStream.getAudioTracks()[0];
+                   if (audioTrack) {
+                       stream.addTrack(audioTrack);
+                   }
+               }
+               
+               // 녹화 설정
+               let options = { mimeType: 'video/webm; codecs=vp9' };
+               try {
+                   state.recorder = new MediaRecorder(stream, options);
+               } catch (e) {
+                   options = { mimeType: 'video/webm' };
+                   state.recorder = new MediaRecorder(stream, options);
+               }
+               
+               const chunks = [];
+               state.recorder.ondataavailable = (e) => {
+                   if (e.data.size > 0) {
+                       chunks.push(e.data);
+                   }
+               };
+               
+               // 녹화 완료 처리
+state.recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    
+    // 현재 날짜와 시간 포함해서 파일명 생성
+    const now = new Date();
+    const dateTime = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = state.videoType === 'shorts' 
+        ? `숏츠영상_9x16_${dateTime}.webm` 
+        : `유튜브영상_16x9_${dateTime}.webm`;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+    
+    // 완료 메시지 표시
+    alert('영상 내보내기가 완료되었습니다! 다운로드된 WebM 파일을 확인하세요.');
+    
+    state.exportMode = false;
+    state.isExporting = false;
+    renderApp();
+};
+               
+               // 총 녹화 시간 계산
+               const totalDuration = state.scenes.reduce((total, scene) => total + (scene.duration || 3), 0) * 1000;
+               
+               // 녹화 시작
+               state.recorder.start();
+               
+               // 진행 상황 업데이트 함수
+               const updateProgress = () => {
+                   if (!state.isExporting) return;
+                   
+                   const elapsed = performance.now() - state.startTime;
+                   const progress = Math.min((elapsed / totalDuration) * 100, 100);
+                   state.exportProgress = progress;
+                   
+                   // 프로그레스 바 업데이트
+                   const progressValue = document.querySelector('.progress-value');
+                   if (progressValue) {
+                       progressValue.style.width = `${progress}%`;
+                   }
+                   
+                   // 프로그레스 텍스트 업데이트
+                   const progressText = document.querySelector('.text-white:not(button):not(h2)');
+                   if (progressText) {
+                       progressText.textContent = `내보내는 중... ${Math.round(progress)}%`;
+                   }
+                   
+                   if (progress < 100) {
+                       requestAnimationFrame(updateProgress);
+                   } else {
+                       // 녹화 완료
+                       setTimeout(() => {
+                           if (state.recorder && state.recorder.state !== 'inactive') {
+                               state.recorder.stop();
+                           }
+                           if (state.audioElement) {
+                               state.audioElement.pause();
+                           }
+                       }, 500);
+                   }
+               };
+               
+               state.startTime = performance.now();
+               animateFrames();
+               updateProgress();
+               
+               renderApp();
+               
+           } catch (error) {
+               console.error('녹화 시작 오류:', error);
+               alert('녹화 시작 중 오류가 발생했습니다. 최신 Chrome, Edge 또는 Firefox 브라우저를 사용해주세요.');
+               state.exportMode = false;
+               state.isExporting = false;
+               renderApp();
+           }
+       }
+       
+       // 내보내기 취소
+       function cancelExport() {
+           if (state.recorder && state.recorder.state !== 'inactive') {
+               state.recorder.stop();
+           }
+           
+           if (state.audioElement) {
+               state.audioElement.pause();
+           }
+           
+           if (state.animationFrame) {
+               cancelAnimationFrame(state.animationFrame);
+               state.animationFrame = null;
+           }
+           
+           state.exportMode = false;
+           state.isExporting = false;
+           state.isPlaying = false;
+           renderApp();
+       }
+       
+       // 장면 추가
+       function addScene() {
+           state.scenes.push({
+               images: [],
+               caption: '',
+               duration: 3,
+               captionStyle: { color: 'white', fontSize: 'lg', background: 'black' },
+               imageEffects: []
+           });
+           
+           renderScenes();
+           document.getElementById('scenes-container').innerHTML = renderScenes();
+       }
+       
+       // 장면 삭제
+       function removeScene(index) {
+           if (state.scenes.length <= 1) return;
+           
+           state.scenes.splice(index, 1);
+           
+           if (state.currentFrame >= state.scenes.length) {
+               state.currentFrame = state.scenes.length - 1;
+           }
+           
+           document.getElementById('scenes-container').innerHTML = renderScenes();
+           updateSidebarPreview();
+       }
+       
+       // 장면 순서 변경
+       function moveScene(index, direction) {
+           if ((direction === -1 && index > 0) || (direction === 1 && index < state.scenes.length - 1)) {
+               const newIndex = index + direction;
+               
+               // 장면 교환
+               [state.scenes[index], state.scenes[newIndex]] = [state.scenes[newIndex], state.scenes[index]];
+               
+               if (state.currentFrame === index) {
+                   state.currentFrame = newIndex;
+               } else if (state.currentFrame === newIndex) {
+                   state.currentFrame = index;
+               }
+               
+               document.getElementById('scenes-container').innerHTML = renderScenes();
+               updateSidebarPreview();
+           }
+       }
+       
+       // 이미지 추가 대화상자
+       function addImagesToScene(sceneIndex) {
+           const input = document.createElement('input');
+           input.type = 'file';
+           input.accept = 'image/*';
+           input.multiple = true;
+           
+           input.onchange = (e) => {
+               const files = e.target.files;
+               if (!files || files.length === 0) return;
+               
+               const scene = state.scenes[sceneIndex];
+               if (!scene.images) scene.images = [];
+               if (!scene.imageEffects) scene.imageEffects = [];
+               
+               const filePromises = [];
+               
+               for (let i = 0; i < files.length; i++) {
+                   filePromises.push(new Promise((resolve) => {
+                       const reader = new FileReader();
+                       reader.onload = (e) => {
+                           const imageData = e.target.result;
+                           scene.images.push(imageData);
+                           scene.imageEffects.push({ effect: 'none', intensity: 50 });
+                           resolve();
+                       };
+                       reader.readAsDataURL(files[i]);
+                   }));
+               }
+               
+               Promise.all(filePromises).then(() => {
+                   // 이미지 컨테이너 업데이트
+                   const imageContainer = document.querySelector(`.image-container[data-index="${sceneIndex}"]`);
+                   if (imageContainer) {
+                       imageContainer.innerHTML = renderImagePreviews(scene.images, scene.imageEffects, sceneIndex);
+                   }
+                   
+                   // 미리보기 업데이트
+                   updateSidebarPreview();
+               });
+           };
+           
+           input.click();
+       }
+       
+       // 이미지 삭제
+       function removeImage(sceneIndex, imageIndex) {
+           const scene = state.scenes[sceneIndex];
+           
+           if (scene.images && scene.images.length > 0) {
+               scene.images.splice(imageIndex, 1);
+               
+               if (scene.imageEffects && scene.imageEffects.length > imageIndex) {
+                   scene.imageEffects.splice(imageIndex, 1);
+               }
+               
+               // 이미지 컨테이너 업데이트
+               const imageContainer = document.querySelector(`.image-container[data-index="${sceneIndex}"]`);
+               if (imageContainer) {
+                   imageContainer.innerHTML = renderImagePreviews(scene.images, scene.imageEffects, sceneIndex);
+               }
+               
+               // 미리보기 업데이트
+               updateSidebarPreview();
+           }
+       }
+       
+       // 이미지 효과 설정
+       function setImageEffect(sceneIndex, imageIndex, effect) {
+           const scene = state.scenes[sceneIndex];
+           
+           if (!scene.imageEffects) {
+               scene.imageEffects = Array(scene.images.length).fill({ effect: 'none', intensity: 50 });
+           }
+           
+           if (!scene.imageEffects[imageIndex]) {
+               scene.imageEffects[imageIndex] = { effect: 'none', intensity: 50 };
+           }
+           
+           scene.imageEffects[imageIndex].effect = effect;
+           
+           // 미리보기 업데이트
+           updateSidebarPreview();
+       }
+       
+       // 모든 이미지 효과 강도 설정
+       function setAllEffectsIntensity(sceneIndex, intensity) {
+           const scene = state.scenes[sceneIndex];
+           
+           if (scene.imageEffects && scene.imageEffects.length > 0) {
+               scene.imageEffects.forEach(effect => {
+                   effect.intensity = intensity;
+               });
+               
+               // 미리보기 업데이트
+               updateSidebarPreview();
+           }
+       }
+       
+       // 자막 설정
+       function setSceneCaption(sceneIndex, caption) {
+           state.scenes[sceneIndex].caption = caption;
+           
+           // 미리보기 업데이트
+           updateSidebarPreview();
+       }
+       
+       // 자막 스타일 속성 설정
+       function setCaptionStyleProperty(sceneIndex, property, value) {
+           const scene = state.scenes[sceneIndex];
+           
+           if (!scene.captionStyle) {
+               scene.captionStyle = { color: 'white', fontSize: 'lg', background: 'black' };
+           }
+           
+           scene.captionStyle[property] = value;
+           
+           // 색상 선택기 UI 업데이트
+           if (property === 'color') {
+               const colorButtons = document.querySelectorAll(`.caption-color[data-index="${sceneIndex}"]`);
+               colorButtons.forEach(button => {
+                   if (button.dataset.color === value) {
+                       button.classList.add('active');
+                   } else {
+                       button.classList.remove('active');
+                   }
+               });
+           }
+           
+           // 미리보기 업데이트
+           updateSidebarPreview();
+       }
+       
+       // 장면 지속 시간 설정
+       function setSceneDuration(sceneIndex, duration) {
+           state.scenes[sceneIndex].duration = duration;
+       }
+       
+       // 초기화 및 앱 렌더링
+       function init() {
+           renderApp();
+       }
+       
+       // 앱 초기화
+       init();
+   </script>
+</body>
+</html>
